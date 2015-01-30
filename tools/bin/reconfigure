@@ -1,0 +1,23 @@
+#!/usr/bin/cmake -P
+
+# import environment variables
+set(_vars)
+foreach(_var src prefix $ENV{env})
+  set(${_var} "$ENV{${_var}}")
+  if(NOT ${_var})
+    message(FATAL_ERROR "undefined environment variable: ${_var}")
+  endif()
+  string(REGEX REPLACE "([\;\\])" "\\\\\\1" _escaped "${${_var}}")
+  set(_vars ${_vars} "-D${_var}=${_escaped}")
+endforeach()
+
+# include an optional config file
+# if this file defines CMAKE_FLAGS, those flags will be added to the cmake command line
+include(${src}/config.cmake OPTIONAL)
+
+# configure the project
+set(_dir ${prefix}/tmp)
+file(MAKE_DIRECTORY ${_dir})
+file(REMOVE ${_dir}/CMakeCache.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} ${src} -DCMAKE_PREFIX_PATH=${prefix} -DCMAKE_INSTALL_PREFIX=${prefix} ${_vars} ${CMAKE_FLAGS} WORKING_DIRECTORY ${_dir})
+execute_process(COMMAND ${CMAKE_COMMAND} --build ${_dir} --target tools)

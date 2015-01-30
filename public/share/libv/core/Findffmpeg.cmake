@@ -1,0 +1,17 @@
+set(vars)
+
+foreach(component ${ffmpeg_FIND_COMPONENTS})
+  set(lower ffmpeg_${component})
+  find_package(${lower} QUIET)
+  string(TOUPPER ${lower} upper)
+  if(${upper}_FOUND)
+    list(APPEND FFMPEG_INCLUDE_DIRS ${${upper}_INCLUDE_DIRS})
+    list(APPEND FFMPEG_LIBRARIES ${${upper}_LIBRARIES})
+  endif()
+  if(ffmpeg_FIND_REQUIRED_${component})
+    list(APPEND vars ${upper}_FOUND)
+  endif()
+endforeach()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(ffmpeg DEFAULT_MSG ${vars})

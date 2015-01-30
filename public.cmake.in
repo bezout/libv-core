@@ -1,0 +1,13 @@
+set(libv_core_CXX_FLAGS_GNU " -march=native -fopenmp -fvisibility=hidden ")
+set(libv_core_CXX_FLAGS_Clang " -march=native -fvisibility=hidden ")
+set(libv_core_CXX_FLAGS_Intel " -xhost -openmp -fvisibility=hidden ")
+set(libv_core_CXX_FLAGS_MSVC " /DNOMINMAX /D_USE_MATH_DEFINES /D_WINSOCKAPI_ /DWIN32_LEAN_AND_MEAN ")
+
+include(function_libv_find_package)
+
+libv_find_package(Boost)
+libv_find_package(Eigen)
+
+include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
+  )

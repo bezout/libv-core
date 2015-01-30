@@ -1,0 +1,8 @@
+find_program(DOXYGEN_BIN doxygen)
+mark_as_advanced(DOXYGEN_BIN)
+
+find_program(GRAPHVIZ_DOT_BIN dot)
+mark_as_advanced(GRAPHVIZ_DOT_BIN)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Doxygen DEFAULT_MSG DOXYGEN_BIN GRAPHVIZ_DOT_BIN)

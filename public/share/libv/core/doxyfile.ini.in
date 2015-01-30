@@ -1,0 +1,12 @@
+PROJECT_NAME = "Libv Reference Manual: @PROJECT_NAME@ module"
+GENERATE_TAGFILE = @variable_prefix@.tag
+INPUT += @doc_dirs@
+STRIP_FROM_PATH += @doc_dirs@
+EXAMPLE_PATH += @doc_dirs@
+INCLUDE_PATH += @include_dirs@
+TAGFILES += @LIBV_TAG_MAP@
+CITE_BIB_FILES += @bib_files@
+
+@INCLUDE = @CMAKE_CURRENT_LIST_DIR@/doxyfile.ini
+
+@local_exports@

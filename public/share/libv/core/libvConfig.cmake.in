@@ -1,0 +1,35 @@
+# This file is to be used with find_package() once @PROJECT_NAME@ is installed.
+# Use Findlibv.cmake.in during the initial build.
+
+set(_vars "")
+
+list(APPEND CMAKE_MODULE_PATH @CMAKE_INSTALL_PREFIX@/share/@path_prefix@)
+
+find_path(@macro_prefix@_INCLUDE_DIRS @path_prefix@/version.hpp @CMAKE_INSTALL_PREFIX@/include)
+list(APPEND _vars @macro_prefix@_INCLUDE_DIRS)
+list(APPEND LIBV_INCLUDE_DIRS ${@macro_prefix@_INCLUDE_DIRS})
+mark_as_advanced(@macro_prefix@_INCLUDE_DIRS)
+include_directories(${@macro_prefix@_INCLUDE_DIRS})
+
+set(@variable_prefix@_has_library @has_library@)
+if(@variable_prefix@_has_library)
+  find_library(@macro_prefix@_LIBRARIES @PROJECT_NAME@ PATHS @CMAKE_INSTALL_PREFIX@/lib)
+  list(APPEND _vars @macro_prefix@_LIBRARIES)
+  list(APPEND LIBV_LIBRARIES ${@macro_prefix@_LIBRARIES})
+  mark_as_advanced(@macro_prefix@_LIBRARIES)
+endif()
+
+find_file(@macro_prefix@_TAG_FILE @variable_prefix@.tag @CMAKE_INSTALL_PREFIX@/share/doc/@path_prefix@)
+find_path(@macro_prefix@_DOC_DIR NAMES index.html PATH @CMAKE_INSTALL_PREFIX@/share/doc/@path_prefix@/html)
+list(APPEND LIBV_TAG_FILES ${@macro_prefix@_TAG_FILE})
+mark_as_advanced(@macro_prefix@_TAG_FILE)
+mark_as_advanced(@macro_prefix@_DOC_DIR)
+set(LIBV_TAG_MAP "${LIBV_TAG_MAP} ${@macro_prefix@_TAG_FILE}=${@macro_prefix@_DOC_DIR}")
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(@PROJECT_NAME@ DEFAULT_MSG ${_vars})
+
+@local_exports@
+
+set(@macro_prefix@_CXX_FLAGS "${@variable_prefix@_CXX_FLAGS_${CMAKE_CXX_COMPILER_ID}}" CACHE STRING "recommended compiler flags when using @PROJECT_NAME@")
+set(LIBV_CXX_FLAGS "${LIBV_CXX_FLAGS} ${@macro_prefix@_CXX_FLAGS}")

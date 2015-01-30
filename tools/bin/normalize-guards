@@ -1,0 +1,32 @@
+#!/usr/bin/perl -w
+#
+# Replace include guards with nice normalized ones.
+# Files not in a `src` directory or with no include guard will be silently ignored.
+#
+# Usage: normalize-guards FILES...
+
+undef $/;
+
+for my $file (@ARGV)
+{
+	# generate a macro name based on the file path
+	my $guard = uc("$ENV{PWD}/$file");
+	$guard =~ s{.*/SRC/}{} || next;
+	$guard =~ s{\W+}{_}g;
+
+	# read the file's contents
+	open FILE, $file;
+	my $contents = <FILE>;
+	close FILE;
+
+	# try replacing the old guard with the new one
+	my $match = $contents =~ s{^\h*#\h*ifndef\h+(\S+)\s*\n\s*#\h*define\h+\1\h*$}{#ifndef $guard\n#define $guard}m;
+
+	# write the changes
+	if($match)
+	{
+		open FILE, '>', $file;
+		print FILE $contents;
+		close FILE;
+	}
+}

@@ -1,0 +1,105 @@
+#!/bin/sh
+
+: ${src:?}
+: ${prefix:?}
+
+doc="$prefix/share/doc/tests"
+var="$prefix/var/tests"
+
+rm -rf "$var"
+mkdir -p "$var"
+cd "$var"
+
+cat >tests.dox <<eof
+	/**
+	\page tests Daily tests
+	\details
+	The whole project is built and tested daily with various sets of parameters.
+	The last execution ($(date -R)) resulted in the following logs, for each tested configuration:
+eof
+
+for config in "$src/configs/"*
+do # Begin $config
+
+_config="${config#$src/configs/}"
+build="$var/$_config"
+page="tests_${_config}"
+
+cat >>doxyfile.ini <<eof
+	INPUT += $build/tests.dox
+	EXAMPLE_PATH += $build
+eof
+
+cat >>tests.dox <<eof
+	- \subpage $page
+eof
+
+( # Entering directory $build
+
+mkdir -p "$build"
+cd "$build"
+
+cmake -C "$config" "$src" >cmake.log 2>&1
+make -k >make.log 2>&1
+ctest >ctest.log 2>&1
+
+cat >tests.dox <<eof
+	/**
+	\page $page $_config
+	\include $config
+	\include $build/ctest.log
+	\section cmake Configuration
+	\include $build/cmake.log
+	\section make Build
+	\include $build/make.log
+	\section ctest Test results
+	\include $build/Testing/Temporary/LastTest.log
+	*/
+eof
+
+) & # Leaving directory $build
+
+done # End $config
+
+wait
+find -name Doxyfile -printf '@INCLUDE = %p\n' >>doxyfile.ini
+
+cat >>tests.dox <<eof
+	*/
+eof
+
+cat >>doxyfile.ini <<eof
+	INPUT += $var/tests.dox
+	EXAMPLE_PATH += $src/configs
+	OUTPUT_DIRECTORY = $doc
+	GENERATE_TAGFILE =
+	TAGFILES =
+	@INCLUDE = $src/doxyfile.ini
+eof
+
+mkdir -p "$doc"
+doxygen doxyfile.ini
+find "$doc" -name '*.html' | xargs -n1 perl -w -i -e '
+
+	no warnings "uninitialized";
+
+	undef $/;
+	$_ = <>;
+
+	s{
+		(class="memTemplParams".*?>(.*?)</td>.*?)?
+		class="mem(Templ)?ItemLeft".*?>(.*?</td>).*?
+		class="mem(Templ)?ItemRight".*?>(.*?</td>)
+	}{
+		class="memItemLeft">$2 $4
+		<td class="memItemRight">$6
+	}xsg;
+
+	s{</tr>\s*<tr class="memdesc:.*?>}{}g;
+	s{class="mdesc(\w*?)"}{class="memItem$1 mdesc$1"}g;
+	s{</table>\s*<table class="memberdecls">}{}g;
+	s{colspan="2"}{colspan="4"}g;
+
+	print
+
+	'

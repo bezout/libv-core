@@ -1,0 +1,12 @@
+find_path(FFMPEG_SWSCALE_INCLUDE_DIRS NAMES libswscale/swscale.h)
+mark_as_advanced(FFMPEG_SWSCALE_INCLUDE_DIRS)
+
+find_library(FFMPEG_SWSCALE_LIBRARIES swscale)
+mark_as_advanced(FFMPEG_SWSCALE_LIBRARIES)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(ffmpeg_swscale DEFAULT_MSG FFMPEG_SWSCALE_INCLUDE_DIRS FFMPEG_SWSCALE_LIBRARIES)
+
+if(FFMPEG_SWSCALE_FOUND)
+include_directories(SYSTEM ${FFMPEG_SWSCALE_INCLUDE_DIRS})
+endif()

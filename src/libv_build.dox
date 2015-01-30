@@ -1,0 +1,309 @@
+/**
+
+\addtogroup libv_build Organiser son projet avec la Libv
+\author Alexis Wilhelm (2014)
+
+Ce document propose une méthode simple, portable et pérenne pour organiser un projet logiciel facile à déployer.
+
+\section s1 Première étape : Un projet pour regrouper plusieurs composants
+
+Tout d'abord, il faut bien voir que toute application est codée pour répondre aux besoins d'un projet (c'est ce projet qui finance l'écriture de l'application), et que toute bibliothèque est codée pour partager des fonctionnalités utiles à plusieurs applications.
+On n'écrit pas une nouvelle application ou une nouvelle bibliothèque juste parce que c'est chic.
+Ce constat, même s'il peut sembler trivial, a des répercussions immédiates sur l'organisation des logiciels : on ne trouvera jamais une application ou une bibliothèque seule dans son dossier dans un coin d'un disque dur, mais toujours intégrée à un projet.
+La première étape consiste donc à définir un dossier qui contiendra ton projet :
+
+\code
+mkdir '~/mon-projet'
+cd    '~/mon-projet'
+\endcode
+
+Dans le cas (fréquent) où tu es un étudiant et que tu ne connais pas le nom du projet sur lequel tu travailles, demande-le simplement à ton chef.
+
+Pour garder un historique des modifications apportées à ton projet et pour permettre à d'autres de travailler sur ton projet, initialise un dépôt Git local avec :
+
+\code
+git init
+\endcode
+
+Tu peux maintenant importer des composants partagés nécessaires pour ton projet.
+Nous utilisons pour ça `git-submodule`, qui permet d'importer une version bien définie d'une bibliothèque, sans duplication du code, et avec la possibilité de la mettre à jour.
+Au minimum, tu auras besoin de la Libv, que tu peux importer comme ceci :
+
+\code
+git submodule add 'git@git.univ-bpclermont.fr:+groupev/libv/develop.git' 'libs/libv'
+\endcode
+
+Si tout se passe bien, le code de la Libv devrait maintenant être dans `~/mon-projet/libs/libv`, prêt à être utilisé.
+
+Tu auras aussi besoin d'une bibliothèque de fonctions spécifiques à ton projet, dans laquelle tu rangeras les fonctions suffisamment génériques pour être utilisées dans plusieurs applications, mais pas assez génériques pour être utilisées dans plusieurs projets.
+La page \ref libv_build_lib explique comment créer une bibliothèque.
+Suis bien toutes les étapes, mais ne compile rien pour l'instant.
+
+Enfin, pour que ton projet soit utile, il faut ajouter une application.
+La page \ref libv_build_app explique comment créer une application.
+Suis bien toutes les étapes, mais ne compile rien pour l'instant.
+
+Tu devrais maintenant avoir trois composants : une bibliothèque généraliste (la Libv), une bibliothèque spécifique à ton projet, et une application.
+Ces trois composants sont rangés dans le même dépôt Git, donc il est facile de récupérer le projet complet.
+De plus, on a pris soin de choisir la version de chaque composant de façon à ce que toutes les applications fonctionnent correctement.
+
+Comme la bibliothèque spécifique dépend de la Libv, et comme l'application dépend de la bibliothèque spécifique, pour déployer tout ceci, il faudrait normalement :
+- compiler la Libv,
+- installer la Libv,
+- compiler la bibliothèque spécifique en renseignant le dossier dans lequel la Libv est installée,
+- installer la bibliothèque spécifique
+- compiler l'application en renseignant les dossiers dans lesquels la Libv et la bibliothèque spécifique sont installées,
+- installer l'application.
+
+Bien évidemment, nous ne voulons pas d'une procédure aussi compliquée.
+
+\section s2 Deuxième étape : Un projet pour automatiser le déploiement
+
+Ajoute donc à la racine de ton projet un fichier `CMakeLists.txt` contenant :
+
+\code
+cmake_minimum_required(VERSION 2.6)
+
+# 1. nom du projet
+project(mon-projet)
+
+set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
+
+# 2. liste des composants
+add_subdirectory(libs/libv)
+add_subdirectory(libs/ma-bibliothèque)
+add_subdirectory(apps/mon-application)
+\endcode
+
+<ol>
+<li>
+Renseigne le nom de ton projet ici.
+<li>
+Liste les composants de ton projet, dans l'ordre dans lequel ils devront être compilés.
+Les bibliothèques les plus génériques doivent être en haut, et les applications en bas.
+</ol>
+
+Tu peux alors compiler ton projet en écrivant dans ton terminal :
+
+\code
+mkdir build
+cd build
+cmake chemin/vers/mon-projet
+make install
+\endcode
+
+Mais ça ne suffit toujours pas, comme nous l'allons voir maintenant.
+
+\section i1 Interlude : Discours préliminaire sur les variables d'environnement
+
+Le comportement de base du système d'exploitation, quand on écrit `toto` dans un terminal, est d'exécuter le fichier `/usr/bin/toto`, s'il existe.
+S'il ce fichier n'existe pas, il exécute le fichier `/bin/toto`, s'il existe.
+Mais il aurait été triste de se contenter de ce comportement basique.
+En fait, la variable d'environnement `PATH` contient une liste de dossiers séparés par deux points (`:`) (initialement `/usr/bin:/bin`), et le système d'exploitation cherche les applications dans chacun de ces dossiers.
+Ainsi, si notre application `toto` était rangée dans `/home/moi/mon-environnement/bin` et pas dans `/usr/bin` ou `/bin`, il faudrait changer la valeur de la variable `PATH` en `/home/moi/mon-environnement/bin:/usr/bin:/bin` pour que le système d'exploitation puisse le trouver, comme ceci :
+
+\code
+toto  # incorrect
+export PATH="/home/moi/mon-environnement/bin:/usr/bin:/bin"
+toto  # correct
+\endcode
+
+De même, quand une application démarre, les bibliothèques dont il a besoin sont cherchées dans un des dossiers listés par la variable `LD_LIBRARY_PATH`.
+Ainsi, si notre application `toto` utilisait une bibliothèque rangée dans `/home/moi/mon-environnement/lib` et pas dans `/usr/lib` ou `/lib`, il faudrait changer la valeur de la variable `LD_LIBRARY_PATH` en `/home/moi/mon-environnement/lib:/usr/lib:/lib` pour que le système d'exploitation puisse la trouver, comme ceci :
+
+\code
+toto  # incorrect
+export PATH="/home/moi/mon-environnement/bin:$PATH"
+export LD_LIBRARY_PATH="/home/moi/mon-environnement/lib:$LD_LIBRARY_PATH"
+toto  # correct
+\endcode
+
+Enfin, pour déployer notre projet, nous avons besoin de deux dossiers :
+- le dossier qui contient le code source du projet, auquel nous accéderons par la variable `src`, ou `CMAKE_SOURCE_DIR` dans les scripts CMake.
+C'est la racine du projet, et il doit contenir un fichier `CMakeLists.txt`.
+Dans notre exemple, c'est `/home/moi/mon-projet` ;
+- le préfixe d'installation, auquel nous accéderons par la variable `prefix`, ou `CMAKE_INSTALL_PREFIX` dans les scripts CMake.
+C'est le dossier dans lequel les applications et les bibliothèques seront installées.
+Dans notre exemple, c'est `/home/moi/mon-environnement`.
+Les applications seront donc installées dans `/home/moi/mon-environnement/bin`, et les bibliothèques dans `/home/moi/mon-environnement/lib`.
+
+\section s3 Troisième étape : Un projet dans un environnement bien défini
+
+Ces variables d'environnement doivent être modifiées chaque matin quand tu commences à travailler sur ton projet.
+Comme c'est un peu fastidieux et propice à l'apparition d'erreurs, nous allons sauvegarder ces commandes dans un fichier.
+Comme expliqué dans la page \ref libv_build_lib, les fichiers contenus dans le dossier `tools.in` des bibliothèques sont configurés et installés quand on construit la règle `tools`.
+Ainsi, si tu places dans le dossier `libs/ma-bibliothèque/tools.in` un fichier `env.sh` contenant :
+
+\code
+export LC_ALL=C
+export src='@CMAKE_SOURCE_DIR@'
+export prefix='@CMAKE_INSTALL_PREFIX@'
+export PATH="@CMAKE_INSTALL_PREFIX@/bin:$PATH"
+export LD_LIBRARY_PATH="@CMAKE_INSTALL_PREFIX@/lib:$LD_LIBRARY_PATH"
+\endcode
+
+… et que tu écris dans ton terminal :
+
+\code
+make tools
+\endcode
+
+… tu verras apparaître dans `/home/moi/mon-environnement` un fichier `env.sh` contenant :
+
+\code
+export LC_ALL=C
+export src='/home/moi/mon-projet'
+export prefix='/home/moi/mon-environnement'
+export PATH="/home/moi/mon-environnement/bin:$PATH"
+export LD_LIBRARY_PATH="/home/moi/mon-environnement/lib:$LD_LIBRARY_PATH"
+\endcode
+
+… c'est-à-dire les commandes que tu dois taper chaque matin.
+Tu peux donc importer d'un coup toutes les variables d'environnement de ton projet en écrivant dans ton terminal :
+
+\code
+source /home/moi/mon-environnement/env.sh
+\endcode
+
+Une fois que ces variables ont été importées, tu peux exécuter les applications installées par ton projet en écrivant juste leur nom, ce qui est plus confortable et plus sûr que d'utiliser le chemin complet vers le fichier compilé.
+
+\section s4 Quatrième étape : Un projet facile à déployer
+
+Dans la section \ref s2, nous avons configuré le projet avec :
+
+\code
+cmake chemin/vers/mon-projet
+\endcode
+
+Mais alors certaines bibliothèques installées dans des répertoires exotiques pourraient ne pas être trouvées, et dans ce cas il faudrait ajouter, pour chaque bibliothèque non trouvée, des variables à la fin de cette commande pour aider CMake à les trouver.
+De plus, par défaut CMake installe les applications dans `/usr/local/bin` et les bibliothèques dans `/usr/local/lib`.
+Mais ce comportement pose deux problèmes.
+D'abord, installer dans `/usr/local` nécessite les privilèges administrateur, qu'on n'a pas sur les véhicules (par exemple), et qu'il est de toutes façons risqué d'utiliser à tout va.
+Et surtout, toutes nos bibliothèques ne sont pas encore stabilisées, donc tu en auras certainement une version différente d'un projet à l'autre.
+Si tu veux travailler parallèlement sur deux projets, tu devras installer ces bibliothèques dans des dossiers différents.
+Le plus simple pour être sûr d'éviter les conflits est donc de déployer toutes les bibliothèques nécessaires à un projet dans un dossier dédié à ce projet.
+Ainsi, pour que le projet soit installé au bon endroit et qu'il soit correctement configuré, il aurait fallu écrire à la place :
+
+\code
+mkdir '/home/moi/mon-environnement'
+mkdir 'build'
+cd    'build'
+cmake 'chemin/vers/mon-projet' -DCMAKE_PREFIX_PATH='/home/moi/mon-environnement' -DCMAKE_INSTALL_PREFIX='/home/moi/mon-environnement' -DBOOST_ROOT='...' -DCMAKE_CXX_FLAGS='...'
+make tools
+\endcode
+
+C'est plus compliqué, mais il y a dans le dossier `libv/build/tools/bin` un dcript `reconfigure` qui automatise cette procédure.
+Exécute-le en écrivant dans ton terminal :
+
+\code
+src='chemin/vers/mon-projet' prefix='chemin/vers/mon-environnement' chemin/vers/mon-projet/libs/libv/build/tools/bin/reconfigure
+\endcode
+
+Mais nous pouvons simplifier encore le déploiement en utilisant des outils graphiques, comme Zenity sur un bureau GNOME.
+Pour cela, crée à la racine de ton projet un lanceur d'application `bootstrap.desktop` contenant ce qui suit, adapté selon tes besoins :
+
+\code
+[Desktop Entry]
+Type=Application
+Name=Install to Hard Drive
+Icon=system-software-update
+Exec=sh -aec 'src=$(dirname %k); prefix=$(zenity --file-selection --filename="$HOME/build" --directory --save --confirm-overwrite); "$src/libs/libv/build/tools/bin/reconfigure" || :; cd "$prefix"; "$SHELL"'
+Terminal=true
+\endcode
+
+Tu n'auras alors plus qu'à cliquer sur ce lanceur pour déployer ton projet sur une nouvelle machine.
+Et pour compiler et installer, tu peux utiliser le script `rebuild`, qui n'est qu'un enrobage autour de `make`.
+
+\todo
+Mentionner la ruse de la clé USB pour garder le code secret.
+
+\section i2 Conclusion : Avantages de cette méthode
+
+Le tableau suivant compare les commandes nécessaires pour effectuer une sélection d'opérations courantes, avec ou sans la méthode décrite ci-dessus.
+
+<table>
+<tr>
+<th>
+Opération (fréquence)
+<th>
+Sans cette méthode
+<th>
+Avec cette méthode
+<tr>
+<td>
+Récupérer le projet (une fois par machine)
+<td>
+\code
+cp -r '/media/usb0/libv' 'libv'
+cp -r '/media/usb0/ma-bibliothèque' 'ma-bibliothèque'
+cp -r '/media/usb0/mon-application' 'mon-application'
+pray
+pray --more
+\endcode
+<td>
+\code
+git clone 'git@git.univ-bpclermont.fr:mon-projet.git'
+cd 'mon-projet'
+git submodule update --init
+\endcode
+<tr>
+<td>
+Amorcer le projet (une fois par machine)
+<td>
+\code
+mkdir '/home/moi/mon-environnement'
+mkdir 'build'
+cd    'build'
+cmake 'chemin/vers/mon-projet' -DCMAKE_PREFIX_PATH='/home/moi/mon-environnement' -DCMAKE_INSTALL_PREFIX='/home/moi/mon-environnement' -DBOOST_ROOT='...' -DCMAKE_CXX_FLAGS='...'
+\endcode
+<td>
+À la souris en 3 clics.
+<tr>
+<td>
+Commencer à travailler (chaque matin)
+<td>
+Rien.
+<td>
+\code
+source chemin/vers/mon-environnement/env.sh
+\endcode
+<tr>
+<td>
+Compiler les dépendances (10 fois par jour)
+<td>
+\code
+make -j4 install -C 'chemin/vers/build-libv'
+make -j4 install -C 'chemin/vers/build-ma-bibliothèque'
+\endcode
+<td>
+Rien.
+<tr>
+<td>
+Compiler le projet (50 fois par jour)
+<td>
+\code
+make -j4 install -C 'chemin/vers/build-mon-application'
+\endcode
+<td>
+\code
+rebuild
+\endcode
+<tr>
+<td>
+Exécuter une application (50 fois par jour)
+<td>
+\code
+chemin/vers/build-mon-application/apps/mon-application/mon-application
+\endcode
+<td>
+\code
+mon-application
+\endcode
+</table>
+
+\{
+	\addtogroup libv_build_app
+	\addtogroup libv_build_lib
+\}
+
+*/

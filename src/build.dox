@@ -1,0 +1,50 @@
+/**
+
+\page build Building libV
+\author Vadim Litvinov (2012)
+\date 2012-04-19
+
+libV is a general purpose computer vision library developed at Pascal Institute.
+This file will briefly describe the steps necessary to compile and setup the library on your system.
+
+\section required Required components
+
+Apart from obvious C++ compiler, libV will need the following components to successfully
+build on your system:
+- CMake (version 2.6 or later);
+- Doxygen (only to build documentation, not needed for successful compilation).
+
+\section install Building and installing
+
+To install the library on your system you will need to setup the building system using the following commands:
+\code
+cd [libV source directory]
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=[Release|Debug] -DCMAKE_INSTALL_PREFIX=[libV installation directory] ..
+\endcode
+where:
+- [libV source directory] - the directory where the libV source code is stored;
+- [Release|Debug] - library building mode: "Debug" to build in debug mode and "Release" to build
+in release;
+- [libV installation directory] - the directory on the system where libV should be installed.
+
+Then you can compile and install the library:
+\code
+make
+make install
+\endcode
+
+To generate the library documentation (it will be placed in [libV source dir]/[module name]/doc/html):
+\code
+make doc
+\endcode
+
+Finally, if you want to test the library, you can ran the unitary test as follows:
+\code
+make test
+\endcode
+
+Have fun!
+
+*/

@@ -1,0 +1,12 @@
+find_path(FFMPEG_AVUTIL_INCLUDE_DIRS NAMES libavutil/avutil.h)
+mark_as_advanced(FFMPEG_AVUTIL_INCLUDE_DIRS)
+
+find_library(FFMPEG_AVUTIL_LIBRARIES avutil)
+mark_as_advanced(FFMPEG_AVUTIL_LIBRARIES)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(ffmpeg_avutil DEFAULT_MSG FFMPEG_AVUTIL_INCLUDE_DIRS FFMPEG_AVUTIL_LIBRARIES)
+
+if(FFMPEG_AVUTIL_FOUND)
+include_directories(SYSTEM ${FFMPEG_AVUTIL_INCLUDE_DIRS})
+endif()

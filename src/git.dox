@@ -1,0 +1,72 @@
+/**
+
+\page git Commencer à travailler avec Git
+\author Alexis Wilhelm (2012)
+\date 2012-12-13
+
+Dans le fichier \c /etc/hosts, ajoute ces lignes :
+\code
+172.27.3.1	git.univ-bpclermont.fr
+172.27.3.1	redmine.univ-bpclermont.fr
+\endcode
+Tu peux maintenant accéder à https://git.univ-bpclermont.fr pour voir les dépôts Git du labo.
+
+\section Configuration
+
+Git a certaines fonctionnalités qu'il vaut mieux configurer dès le début, pour ne pas risquer d'être embêté ensuite.
+Toutes ces configurations sont faites avec l'outil \c git-config, avec l'option \c --global quand elles concernent tous les dépôts, ou sans quand elles ne concernent que le dépôt courant.
+
+\par Qui tu es
+Chaque commit contient, outre les modifications qu'il apporte au code, le nom et l'adresse de son auteur, pour pouvoir le contacter en cas de problème.
+Pour simplifier la vie des autres utilisateurs, merci de renseigner ces champs :
+\code
+git config --global user.name 'Ton Nom'
+git config --global user.email ton.nom@univ-bpclermont.fr
+\endcode
+
+\par Un peu de couleur
+Les outils \c git-diff et \c git-log (et probablement d'autres aussi) peuvent utiliser des couleurs pour améliorer la lisibilité.
+Active cette fonctionnalité vitale avec :
+\code
+git config --global color.ui true
+\endcode
+
+\par Rebaser, pas fusionner
+Par défaut, \c git-pull préfère fusionner les modifications distantes avec les modifications locales au lieu de rebaser les modifications locales sur les modifications distantes.
+C'est très fâcheux quand on commence à avoir des « bulles » qui se forment le long de l'historique et qui gênent la lisibilité et qui empêchent d'utiliser \c git-bisect.
+À moins d'avoir une très bonne raison de faire autrement, change ce comportement avec :
+\code
+git config --global branch.autosetuprebase always
+\endcode
+Et si tu avais déjà des dépôts avant ça, configure toutes leurs branches avec :
+\code
+git config branch.<branche>.rebase true
+\endcode
+
+\see \subpage whitespace
+
+\section rw Accès en écriture
+
+Pour participer, tu dois <a href="https://git.univ-bpclermont.fr/users/new">t'inscrire</a>.
+Une fois le formulaire validé, un mail de confirmation est envoyé.
+Dès que tu es connecté, va voir le dépôt <a href="https://git.univ-bpclermont.fr/libv/libv">libv</a>.
+Comme tu n'as pas les autorisations nécessaires pour modifier directement ce dépôt, clique sur le bouton « Clone repository » dans la colonne de droite pour en obtenir ta copie personnelle.
+À ce point, on te demandera sûrement une clé SSH.
+Si tu n'en a pas encore, tape dans un terminal :
+\code
+ssh-keygen -t rsa
+cat ~/.ssh/id_rsa.pub
+\endcode
+Tu devrais alors être redirigé vers ton nouveau clone, sur lequel tu as tous les droits.
+Tu peux donc en faire un clone local et commencer à travailler dessus.
+
+\note
+Pour pouvoir te maintenir à jour par rapport au dépôt principal, ajoute une référence distante en tapant :
+\code
+git remote add --fetch real-origin git://git.univ-bpclermont.fr/libv/libv.git
+\endcode
+
+\warning
+Ne pousse pas ta branche distante le vendredi après-midi : ça ne profitera à personne, et ainsi tu as tout le week-end pour te rendre compte de tes erreurs.
+
+*/

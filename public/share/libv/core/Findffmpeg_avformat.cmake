@@ -1,0 +1,12 @@
+find_path(FFMPEG_AVFORMAT_INCLUDE_DIRS NAMES libavformat/avformat.h)
+mark_as_advanced(FFMPEG_AVFORMAT_INCLUDE_DIRS)
+
+find_library(FFMPEG_AVFORMAT_LIBRARIES avformat)
+mark_as_advanced(FFMPEG_AVFORMAT_LIBRARIES)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(ffmpeg_avformat DEFAULT_MSG FFMPEG_AVFORMAT_INCLUDE_DIRS FFMPEG_AVFORMAT_LIBRARIES)
+
+if(FFMPEG_AVFORMAT_FOUND)
+include_directories(SYSTEM ${FFMPEG_AVFORMAT_INCLUDE_DIRS})
+endif()

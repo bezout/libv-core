@@ -1,0 +1,4 @@
+#!/bin/sh
+: ${prefix:?}
+rm -vrf "$prefix/tmp" "$prefix/include"
+find "$prefix/bin" "$prefix/lib" -type f | xargs strip -vs

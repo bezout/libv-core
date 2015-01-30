@@ -1,0 +1,33 @@
+#if defined(DOXYGEN)
+  #define @macro_prefix@_EXPORT
+  #define @macro_prefix@_NO_EXPORT
+  #define @macro_prefix@_DEPRECATED
+  #define @macro_prefix@_DEPRECATED_EXPORT
+  #define @macro_prefix@_DEPRECATED_NO_EXPORT
+#elif defined(_WIN32)
+  #if defined(@macro_prefix@_STATIC_DEFINE)
+    #define @macro_prefix@_EXPORT
+    #define @macro_prefix@_NO_EXPORT
+  #else
+    #if defined(@variable_prefix@_EXPORTS)
+      #define @macro_prefix@_EXPORT __declspec(dllexport)
+    #else
+      #define @macro_prefix@_EXPORT __declspec(dllimport)
+    #endif
+    #define @macro_prefix@_NO_EXPORT
+  #endif
+  #define @macro_prefix@_DEPRECATED __declspec(deprecated)
+  #define @macro_prefix@_DEPRECATED_EXPORT @macro_prefix@_EXPORT __declspec(deprecated)
+  #define @macro_prefix@_DEPRECATED_NO_EXPORT @macro_prefix@_NO_EXPORT __declspec(deprecated)
+#else
+  #if defined(@macro_prefix@_STATIC_DEFINE)
+    #define @macro_prefix@_EXPORT
+    #define @macro_prefix@_NO_EXPORT
+  #else
+    #define @macro_prefix@_EXPORT __attribute__((visibility("default")))
+    #define @macro_prefix@_NO_EXPORT __attribute__((visibility("hidden")))
+  #endif
+  #define @macro_prefix@_DEPRECATED __attribute__((__deprecated__))
+  #define @macro_prefix@_DEPRECATED_EXPORT @macro_prefix@_EXPORT __attribute__((__deprecated__))
+  #define @macro_prefix@_DEPRECATED_NO_EXPORT @macro_prefix@_NO_EXPORT __attribute__((__deprecated__))
+#endif

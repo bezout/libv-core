@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# (Re-)construit le projet.
+# Les options en ligne de commande sont passées à make.
+# Pour raison historique, la cible à construire peut être donnée dans la variable d'environnement target.
+#
+# Utilisation : [target=CIBLE] rebuild [OPTIONS...]
+
+cd "${prefix:?}/tmp"
+
+status=$( (
+
+  # filtre les options à passer à make
+  # parce qu'on ne peut construire qu'une seule cible
+  _target=
+  for _arg in "$@" "$target" install
+  do case "$_arg" in
+    -*|*=*) echo "$_arg" ;;
+    ?*) [ "$_target" ] && echo "warning: building $_target, not $_arg (because CMake allows only one target)" >&2 || { _target="$_arg"; echo "$_arg"; } ;;
+  esac
+  done |
+
+  # invoque make avec les options qui vont bien
+  (xargs -d\\n make -j$(grep -c processor /proc/cpuinfo) 2>&1 || echo $? >&3) |
+
+  # colore la sortie en fonction du type de message
+  # optimisé pour le forat des messages de gcc
+  (perl -ne '
+    next if m{^-- Up-to-date:};
+    if(m{^-- Installing: (.*)}){next if -d $1}
+    s{$}{\e[m};
+    s{^}{\e[32m} if m{\bBuilding\s}i;
+    s{^}{\e[31m} if m{\berror:}i;
+    s{^}{\e[33m} if m{\bwarning:}i;
+    s{^}{\e[34m} if m{\bnote:}i;
+    s{^}{\e[1m} if s{(:\s)}{$1\e[21m};
+    print' || echo $? >&3)
+
+) 3>&1 1>&4) 4>&1
+
+! [ "$status" ]

@@ -1,0 +1,52 @@
+/**
+
+\addtogroup libv_build_app Construire une application
+\author Alexis Wilhelm (2014)
+
+Pour construire une application, tu as besoin d'un dossier \c mon-application contenant un fichier \c CMakeLists.txt et un ou plusieurs fichiers \c .cpp.
+Le fichier \c CMakeLists.txt est organisé comme ceci, adapté selon tes besoins :
+\code
+	cmake_minimum_required(VERSION 2.6)
+
+	# 1. nom de l'application
+	project(mon-application)
+
+	# 2. importer la Libv
+	find_package(libv REQUIRED build core)
+
+	# 3. importer d'autres bibliothèques
+	# find_package(...)
+	# include_directories(...)
+
+	# 4. magie
+	include(libv_configure_executable)
+
+	# 5. lier les bibliothèques
+	# target_link_libraries(${PROJECT_NAME} ...)
+\endcode
+<ol>
+<li>
+	Renseigne le nom de ton application ici.
+<li>
+	Importe la Libv.
+	Le module \c build, notamment, contient des outils qui automatisent la construction de ton application, comme nous le verrons au point 4.
+	La Libv fournit aussi des fichiers \c FindXXX.cmake qui permettent d'importer les bibliothèques que nous utilisons fréquemment avec \c find_package(), donc il est judicieux de l'importer en premier.
+<li>
+	Malgré la toute puissance de la Libv, tu auras sûrement besoin d'autres bibliothèques.
+	Importe-les ici avec \c find_package(), \c include_directories(), ou tout ce dont tu as besoin.
+<li>
+	Le script \c libv_configure_executable utilise ces informations pour construire automatiquement ton application.
+	Notamment, il cherche dans ton dossier tous les fichiers contenant du code C++ et les compile pour obtenir l'exécutable \c mon-application, qui sera installé dans \c $prefix/bin.
+<li>
+	Enfin, liste à nouveau les bibliothèques que ton application utilise.
+	À cause de limitations techniques, ça doit être fait ici plutôt qu'au point 3.
+</ol>
+Tu peux alors compiler ton application en écrivant dans ton terminal :
+\code
+	mkdir build
+	cd build
+	cmake chemin/vers/mon-application
+	make install
+\endcode
+
+*/

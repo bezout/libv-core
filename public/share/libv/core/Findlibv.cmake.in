@@ -1,0 +1,34 @@
+# This file is to be used with find_package() during the initial build.
+# Use libvConfig.cmake.in once @PROJECT_NAME@ is installed.
+
+list(APPEND CMAKE_PREFIX_PATH @PROJECT_SOURCE_DIR@/public)
+list(APPEND CMAKE_MODULE_PATH @PROJECT_SOURCE_DIR@/public/share/@path_prefix@)
+
+set(@macro_prefix@_INCLUDE_DIRS @PROJECT_BINARY_DIR@ @PROJECT_SOURCE_DIR@/public/include @PROJECT_SOURCE_DIR@/src)
+list(APPEND LIBV_INCLUDE_DIRS ${@macro_prefix@_INCLUDE_DIRS})
+include_directories(${@macro_prefix@_INCLUDE_DIRS})
+link_directories(@PROJECT_SOURCE_DIR@/public/lib)
+
+set(@macro_prefix@_TAG_FILE @PROJECT_BINARY_DIR@/@variable_prefix@.tag)
+set(@macro_prefix@_DOC_DIR @PROJECT_BINARY_DIR@/html)
+
+if(NOT ${PROJECT_SOURCE_DIR} STREQUAL @PROJECT_SOURCE_DIR@)
+  list(APPEND LIBV_TAG_FILES ${@macro_prefix@_TAG_FILE})
+  set(LIBV_TAG_MAP "${LIBV_TAG_MAP} ${@macro_prefix@_TAG_FILE}=${@macro_prefix@_DOC_DIR}")
+  list(APPEND LIBV_DOC_DEPENDS @PROJECT_NAME@-doc)
+  set(@variable_prefix@_has_library @has_library@)
+
+  if(@variable_prefix@_has_library)
+    set(@macro_prefix@_LIBRARIES @PROJECT_NAME@)
+    list(APPEND LIBV_LIBRARIES ${@macro_prefix@_LIBRARIES})
+    link_directories(@PROJECT_BINARY_DIR@)
+  endif()
+
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(@PROJECT_NAME@ DEFAULT_MSG @macro_prefix@_INCLUDE_DIRS)
+endif()
+
+@local_exports@
+
+set(@macro_prefix@_CXX_FLAGS "${@variable_prefix@_CXX_FLAGS_${CMAKE_CXX_COMPILER_ID}}" CACHE STRING "recommended compiler flags when using @PROJECT_NAME@")
+set(LIBV_CXX_FLAGS "${LIBV_CXX_FLAGS} ${@macro_prefix@_CXX_FLAGS}")

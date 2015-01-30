@@ -1,0 +1,96 @@
+/**
+
+\addtogroup libv_build_lib Construire une bibliothèque
+\author Alexis Wilhelm (2014)
+
+\note
+Dans cette page, je suppose que tu as déjà lu \ref libv_build_app, qui présente des concepts similaires.
+Construire une bibliothèque est un peu plus compliqué, à cause de sa plus grande diversité d'utilisation.
+
+Une bibliothèque minimaliste se limite, comme pour une application, à un dossier \c ma-bibliothèque contenant un fichier \c CMakeLists.txt, et des sous-dossiers optionnels que je décrirai plus bas.
+Le fichier \c CMakeLists.txt est organisé comme ceci, toujours adapté selon tes besoins :
+\code
+	cmake_minimum_required(VERSION 2.6)
+
+	# 1. nom de la bibliothèque
+	project(ma-bibliothèque)
+
+	# 2. importer la Libv
+	find_package(libv REQUIRED build core)
+
+	# 3. importer d'autres bibliothèques
+	# find_package(...)
+	# include_directories(...)
+
+	# 4. magie
+	include(libv_configure_library)
+
+	# 5. lier les bibliothèques
+	# target_link_libraries(${PROJECT_NAME} ...)
+\endcode
+<ol>
+<li>
+	Renseigne le nom de ta bibliothèque ici.
+<li>
+	Importe la Libv.
+	Le module \c build, notamment, contient des outils qui automatisent la construction de ton bibliothèque, comme nous le verrons au point 4.
+	La Libv fournit aussi des fichiers \c FindXXX.cmake qui permettent d'importer les bibliothèques que nous utilisons fréquemment avec \c find_package(), donc il est judicieux de l'importer en premier.
+<li>
+	Importe les autres bibliothèques dont tu as besoin, en utilisant notamment avec \c find_package() et \c include_directories().
+<li>
+	Le script \c libv_configure_library utilise ces informations pour construire automatiquement ta bibliothèque.
+	Notamment, il cherche des sous-dossiers \c src, \c examples, \c tests, \c public, \c public.in, \c tools et \c tools.in, et il installe ta bibliothèque dans \c $prefix/include, $prefix/lib, $prefix/share, etc.
+	J'explique un peu plus bas la fonction de ces sous-dossiers.
+<li>
+	Enfin, liste à nouveau les bibliothèques dont tu as besoin.
+</ol>
+Tu peux alors compiler ta bibliothèque en écrivant dans ton terminal :
+\code
+	mkdir build
+	cd build
+	cmake chemin/vers/ma-bibliothèque
+	make install
+\endcode
+Pour l'instant, c'est une bibliothèque minimaliste, donc cette procédure n'a rien installé du tout.
+Après tout, on a seulement un fichier \c CMakeLists.txt, et rien d'autre.
+Comme je l'ai mentionné au début, une bibliothèque, contrairement à une application, peut être approchée par des angles très divers, matérialisés par des sous-dossiers reconnus par \c libv_configure_library.
+Voici ce qu'ils contiennent :
+
+\par src/
+Les fichiers \c .cpp rangés ici seront compilés pour obtenir \c libma-bibliothèque.so, qui sera installé dans \c $prefix/lib.
+Les fichiers \c .hpp sont installés dans \c $prefix/include, donc il convient de les ranger dans la belle arborescence que tu veux présenter à l'utilisateur.
+Par exemple, pour pouvoir écrire dans le code utilisateur \c \#include \c <libv/core/formidable.hpp>, il faut que \c formidable.hpp soit rangé dans \c src/libv/core.
+Aussi, pour chaque dossier contenant des fichiers \c .hpp, un fichier \c all.hpp est généré pour inclure tous les en-têtes dans ce dossier.
+
+\par tests/
+Les fichiers \c .cpp rangés ici contiennent chacun un test unitaire, c'est-à-dire une fonction \c main() qui utilise une fonctionnalité de ta bibliothèque dans un environnement contrôlé et qui retourne \c EXIT_SUCCESS si cette fonctionnalité donne le résultat prévu ou \c EXIT_FAILURE dans le cas contraire.
+Les tests unitaires doivent pouvoir être exécutés sans supervision par un humain, donc ils ne peuvent pas être interactifs.
+Tu peux vérifier que ta bibliothèque fonctionne correctement avec :
+\code
+	make test
+\endcode
+
+\par examples/
+Les dossiers rangés ici contiennent chacun une application simple qui illustre une façon d'utiliser ta bibliothèque.
+Ils contiennent chacun un fichier \c CMakeLists.txt et un ou plusieurs fichiers \c .cpp, comme expliqué dans la page \ref libv_build_app.
+
+\par public/
+Tous les fichiers rangés ici seront copiés directement dans \c $prefix pendant l'installation.
+Ainsi, si tu veux installer des configurations par défaut, tu les rangeras dans \c public/etc/ma-bibliothèque.
+Sit tu veux installer des scripts ou des ressources qui n'ont pas besoin d'être compilées, tu les rangeras dans \c public/share/ma-bibliothèque.
+
+\par public.in/
+Certains fichiers n'ont pas besoin d'être compilés, mais ont néanmoins besoin d'être configurés avant d'être installés.
+Par exemple, les lanceurs d'applications (fichiers \c .desktop) doivent contenir le chemin absolu vers l'application.
+Mais ce chemin ne peut pas être connu avant d'installer le projet, puisqu'on a pas encore choisi où il serait installé.
+On écrit donc ce chemin avec des variables : \c \@CMAKE_INSTALL_PREFIX\@/bin/mon-application.
+Pendant l'installation, les mots entre \c \@ sont remplacés par la valeur de la variable correspondante, puis le fichier est installé comme s'il était dans le dossier \c public.
+
+\par tools/
+Tous les fichiers rangés ici seront copiés directement dans \c $prefix pendant le \e bootstrap, et pas pendant \e l'installation comme c'était le cas pour le dossier \c public.
+Il contient des outils de développement.
+
+\par tools.in/
+Ce dossier est à \c tools ce que \c public.in est à \c public.
+
+*/
